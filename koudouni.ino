@@ -21,7 +21,7 @@ DFRobotDFPlayerMini player;             // Ορισμός αντικειμένο
 const int pinAlarm = 12;                // Ανίχνευση σήματος συναγερμού 
 const int pinAlarmLed = 13;             // Ενεργοποίηση συναγερμού 
 
-const int pinMaxTemp = A0;              // Ρύμθιση της θερμοκρασίας λέβητα
+const int pinMaxTemp = A0;              // Ορισμός θερμοκρασίας χώρου για την θέρμανση
 const int pinBrightness = A2;           // Φωτεινότητα εξωτερικού χώρου
 
 int out = 0; 
@@ -120,8 +120,11 @@ void lights() { // Διαχείριση φωτισμού διαδρόμων
   } 
 }
 
-void verifyMaxTemp() {
+void verifyMaxTemp() {  // Καθορισμός θερμοκρασίας της θέρμανσης
   maxTemp = (analogRead(pinMaxTemp) / 30);
+  lcd.setCursor(0,0);
+  lcd.print(maxTemp);
+  lcd.print(" ");
 }
 
 void levitas() { // Διαχείριση θέρμανσης κτιρίου 
