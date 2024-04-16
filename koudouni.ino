@@ -14,6 +14,7 @@ const int pinLights = 4;                // Διαχείριση φώτων δι�
 const int pinAskisi = 5;                // Άσκηση σεισμού 
 const int pinBell = 6;                  // Έκτακτο κτύπημα κουδουνιού 
 const int pinLevita = 7;                // Διαχείριση λέβητα καλοριφέρ 
+const int pinOnOffLed = 8;            // Λαμπάκι ένδειξης ενεργοποιημένου συναγερμού ή όχι
 
 const int pinFan = 9;                   // Διαχείριση ανεμιστήρων 
 SoftwareSerial softwareSerial(11, 10);  // Ορισμός εισόδου-εξόδου player mp3 10-ΤΧ, 11-RΧ 
@@ -22,6 +23,7 @@ const int pinAlarm = 12;                // Ανίχνευση σήματος σ�
 const int pinAlarmLed = 13;             // Ενεργοποίηση συναγερμού 
 
 const int pinMaxTemp = A0;              // Ορισμός θερμοκρασίας χώρου για την θέρμανση
+const int pinOnOffAlarm = A1;           // Διαχείριση συναγερμού
 const int pinBrightness = A2;           // Φωτεινότητα εξωτερικού χώρου
 
 int out = 0; 
@@ -30,6 +32,7 @@ int maxTemp = 20;
 bool century = false; 
 bool h12Flag; 
 bool pmFlag; 
+bool alarmFlag = false;
 String dt;
 
 void setup () { 
@@ -39,16 +42,18 @@ void setup () {
   Serial.begin(57600); 
   myRTC.setClockMode(false); // ορισμός μορφής εμφάνισης 24 ώρης 
   softwareSerial.begin(9600); 
-  if (player.begin(softwareSerial)) player.volume(30); 
+  if (player.begin(softwareSerial)) player.volume(60); 
   pinMode (pinVibration, INPUT); 
   pinMode (pinAskisi, INPUT_PULLUP); 
   pinMode (pinBrightness, INPUT); 
   pinMode (pinBell, INPUT_PULLUP); 
   pinMode (pinLights, OUTPUT); 
   pinMode (pinLevita, OUTPUT); 
+  pinMode (pinOnOffLed, OUTPUT);
   pinMode (pinMaxTemp, INPUT); 
   pinMode (pinFan, OUTPUT); 
   pinMode (pinAlarm, INPUT); 
+  pinMode (pinOnOffAlarm, INPUT);
   pinMode (pinAlarmLed, OUTPUT); 
   // setDateTime (); //καθορισμός ημέρας και ώρας στο ρολόι DS3231, όταν χρειάζεται 
   lcd.begin(16,2); 
@@ -59,6 +64,7 @@ void setup () {
 }
 
 void loop () { 
+  OnOffAlarm();
   displayDateTime(); 
   displayTemperature(); 
   verifyMaxTemp();
@@ -72,15 +78,13 @@ void loop () {
 }
 
 void alarm() { // Διαχείριση συναγερμού 
-  if (myRTC.getHour(h12Flag, pmFlag)>15 || myRTC.getHour(h12Flag, pmFlag)<07) { 
-    if (digitalRead(pinAlarm) == HIGH ) { 
-      digitalWrite(pinAlarmLed, HIGH); 
-      ringBell(5); 
-    } 
-    else { 
-      digitalWrite(pinAlarmLed, LOW); 
-    }
-  }
+     if (digitalRead(pinAlarm) == HIGH && alarmFlag == true) { 
+        digitalWrite(pinAlarmLed, HIGH); 
+        // ringBell(5); 
+      } 
+      else { 
+        digitalWrite(pinAlarmLed, LOW); 
+      }
 }
 
 void displayTemperature() { // Εμφάνιση Θερμοκρασίας και Υγρασίας 
@@ -93,7 +97,7 @@ void displayTemperature() { // Εμφάνιση Θερμοκρασίας και 
   lcd.setCursor(5,0); 
   lcd.print(temp); 
   lcd.setCursor(7,0); 
-  lcd.print("C "); 
+  lcd.print("C  "); 
   lcd.setCursor(10,0);
   lcd.print("H:"); 
   lcd.setCursor(12,0); 
@@ -109,7 +113,7 @@ void displayTemperature() { // Εμφάνιση Θερμοκρασίας και 
 }
 
 void lights() { // Διαχείριση φωτισμού διαδρόμων 
-  if (myRTC.getHour(h12Flag, pmFlag)>8 && myRTC.getHour(h12Flag, pmFlag)<14) { 
+  if (myRTC.getHour(h12Flag, pmFlag)>8 && myRTC.getHour(h12Flag, pmFlag)<15) { 
     out = analogRead(pinBrightness); 
     if (out < 600) { 
       digitalWrite(pinLights, LOW); 
@@ -147,6 +151,17 @@ void levitas() { // Διαχείριση θέρμανσης κτιρίου
   else {  
     digitalWrite(pinLevita,LOW);
     } 
+}
+
+void OnOffAlarm() { // Διαχείριση συναγερμού 
+  if (digitalRead(pinOnOffAlarm) == LOW && alarmFlag == false) {
+    digitalWrite(pinOnOffLed, HIGH);
+    alarmFlag = true; 
+  }
+  if (digitalRead(pinOnOffAlarm) == HIGH && alarmFlag == true) {
+    alarmFlag = false;
+    digitalWrite(pinOnOffLed, LOW);
+  }
 }
 
 void emergencyBell() { // Χειροκίνητο κτύπημα κουδουνιού 
@@ -196,7 +211,7 @@ void bell (){ // Προγραμματισμός και Έλεγχος πότε �
 }
 
 void ringBell(int track){ // Χτύπημα κουδουνιού 
-  player.volume(30); 
+  player.volume(60); 
   player.play(track); 
 }
 
