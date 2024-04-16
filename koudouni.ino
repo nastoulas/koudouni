@@ -80,7 +80,7 @@ void loop () {
 void alarm() { // Διαχείριση συναγερμού 
      if (digitalRead(pinAlarm) == HIGH && alarmFlag == true) { 
         digitalWrite(pinAlarmLed, HIGH); 
-        // ringBell(5); 
+        ringBell(5); 
       } 
       else { 
         digitalWrite(pinAlarmLed, LOW); 
